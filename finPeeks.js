@@ -17,7 +17,8 @@ class visual
             filename: "./data/exampleData.csv",
             separator: " ",
             income: 600.0,
-            budget: 0,
+            saving: 100.0,
+            get budget() { return this.income - this.saving; },
             month_offset: 0,
             colors_seq: ["#2171b5", "#6baed6", "#bdd7e7"],
             colors_div: ["#2166ac", "#67a9cf", "#d1e5f0", "#fddbc7", "#ef8a62", "#b2182b"],
@@ -36,11 +37,11 @@ class visual
                 ["#2c2c2c", "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99"],
                 ["#2c2c2c", "#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928"]],
             colors_text: "black",
+            colors_background: "#f5f5f5",
             fontFamily: "Ubuntu, Calibri, Arial, sans-serif",
             transitionTime: 250,
             currency: "€",
         };
-        this.settings.budget = this.settings.income - 100;
 
         this.svgs = {
             cumulativeSpending: d3.select("#cumulativeSpending"),
@@ -66,6 +67,11 @@ class visual
     // generates a set of n colors, nearly uniformly distributed over RGB space
     generateColors(n)
     {
+        if (n <= 0)
+            return ["#000000"];
+        if (n <= 13)
+            return this.settings.colors_cat[n];
+
         // generate equidistant range of "cubic root"-many values
         let n3 = Math.cbrt(n);
         let dim = (Math.floor(n3) === n3) ? (Math.ceil(Math.cbrt(n)) + 1) : Math.ceil(Math.cbrt(n));
@@ -249,19 +255,25 @@ class visual
         // flag-fractioned data
         // current month
         let currentTotal = goodsVServices.goods[0] + goodsVServices.services[0];
-        this.state.vis.goodsVServices[0] = goodsVServices.services[0] * 100 / currentTotal;
-        this.state.vis.onceVRegular[0] = onceVRegular.regular[0] * 100 / currentTotal;
-        this.state.vis.necessityVLuxury[0] = necessityVLuxury.luxury[0] * 100 / currentTotal;
+        if (currentTotal)
+        {
+            this.state.vis.goodsVServices[0] = goodsVServices.services[0] * 100 / currentTotal;
+            this.state.vis.onceVRegular[0] = onceVRegular.regular[0] * 100 / currentTotal;
+            this.state.vis.necessityVLuxury[0] = necessityVLuxury.luxury[0] * 100 / currentTotal;
+        }
         
         // last month
         let lastTotal = goodsVServices.goods[1] + goodsVServices.services[1];
-        this.state.vis.goodsVServices[1] = goodsVServices.services[1] * 100 / lastTotal;
-        this.state.vis.onceVRegular[1] = onceVRegular.regular[1] * 100 / lastTotal;
-        this.state.vis.necessityVLuxury[1] = necessityVLuxury.luxury[1] * 100 / lastTotal;
+        if (lastTotal)
+        {
+            this.state.vis.goodsVServices[1] = goodsVServices.services[1] * 100 / lastTotal;
+            this.state.vis.onceVRegular[1] = onceVRegular.regular[1] * 100 / lastTotal;
+            this.state.vis.necessityVLuxury[1] = necessityVLuxury.luxury[1] * 100 / lastTotal;    
+        }
 
         // past months avg
         let avgTotal = goodsVServices.goods[2] + goodsVServices.services[2];
-        if (this.state.months > 1)
+        if ((this.state.months > 1) && avgTotal)
         {
             this.state.vis.goodsVServices[2] = goodsVServices.services[2] * 100 / avgTotal;
             this.state.vis.onceVRegular[2] = onceVRegular.regular[2] * 100 / avgTotal;
@@ -282,19 +294,19 @@ class visual
         // find all categories larger than 1%
         // current
         let currentCategories = this.state.categories
-                .map((d, i) => [(spendingPerCategory.current[i] * 100 / currentTotal), d])
+                .map((d, i) => [((currentTotal) ? (spendingPerCategory.current[i] * 100 / currentTotal) : spendingPerCategory.current[i]), d])
                 .sort((a, b) => b[0] - a[0]);
         currentCategories = filterCategories(currentCategories);
 
         // last
         let lastCategories = this.state.categories
-            .map((d, i) => [(spendingPerCategory.last[i] * 100 / lastTotal), d])
+            .map((d, i) => [((lastTotal) ? (spendingPerCategory.last[i] * 100 / lastTotal) : spendingPerCategory.last[i]), d])
             .sort((a, b) => b[0] - a[0]);
         lastCategories = filterCategories(lastCategories);
 
         // avg
         let avgCategories = this.state.categories
-            .map((d, i) => [((this.state.months > 1) ? (spendingPerCategory.avg[i] * 100 / avgTotal) : spendingPerCategory.avg[i]), d])
+            .map((d, i) => [(((this.state.months > 1) && avgTotal) ? (spendingPerCategory.avg[i] * 100 / avgTotal) : spendingPerCategory.avg[i]), d])
             .sort((a, b) => b[0] - a[0]);
         avgCategories = filterCategories(avgCategories);
         
@@ -378,6 +390,16 @@ class visual
     {
         // convert arrays to objects
         rawData.forEach((d) => {
+            if ((d.length != 9)
+             || ((d[5] != 'g') && (d[5] != 's'))
+             || ((d[6] != 'o') && (d[6] != 'r'))
+             || ((d[7] != 'n') && (d[7] != 'l'))
+             || isNaN(d[0])
+             || isNaN(d[1])
+             || isNaN(d[2])
+             || isNaN(d[3]))
+                return;
+
             this.state.data.push({
                 day: +d[0],
                 month: +d[1],
@@ -419,6 +441,32 @@ class visual
         }
 
         this.parseVisData();
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // Mousevents
+    // --------------------------------------------------------------------------------------------
+
+    barMouseHover(node, data, attributes)
+    {
+        // hover text
+        let textJoin = node.selectAll("." + attributes.name + "Text").data(data);
+
+        textJoin.enter()
+            .append("text")
+            .attr("class", attributes.name + "Text")
+            .attr("x", attributes.x)
+            .attr("y", attributes.y)
+            .attr("dominant-baseline", attributes.baseline)
+            .attr("text-align", "start")
+            .attr("font-family", this.settings.fontFamily)
+            .attr("font-size", 12)
+            .attr("fill", this.settings.colors_text)
+            .attr("mouse-events", "none")
+            .text((d) => (d.toFixed(2) + attributes.unit));
+
+        textJoin.exit()
+            .remove();
     }
 
     // --------------------------------------------------------------------------------------------
@@ -608,7 +656,7 @@ class visual
     // renders a stacked bar chart for two categories, summing up to one
     renderDoubleBar(node, data, attributes)
     {
-        // lower
+        // upper
         {
             let dataJoin = node.selectAll("." + attributes.name[0]).data(data);
 
@@ -620,11 +668,21 @@ class visual
                 .attr("width", attributes.barWidth)
                 .attr("height", 0)
                 .attr("fill", attributes.color[0])
-                .attr("stroke-width", 0);
-
-            // add browser tooltip
-            dataEnter.append("title")
-            .text((d) => (d.toFixed(2) + "%"))
+                .attr("stroke-width", 0)
+                .on("mouseover", (d, i, list) => this.barMouseHover(node, [100 - d], {
+                    name: attributes.name[0],
+                    x: attributes.xScale(attributes.ticks[i]) + attributes.xScale.bandwidth() / 2 + attributes.barWidth / 2,
+                    y: attributes.yScale(d),
+                    unit: attributes.unit,
+                    baseline: "text-after-edge",
+                }))
+                .on("mouseout", (d, i, list) => this.barMouseHover(node, [], {
+                    name: attributes.name[0],
+                    x: attributes.xScale(attributes.ticks[i]) + attributes.xScale.bandwidth() / 2 + attributes.barWidth / 2,
+                    y: attributes.yScale(d),
+                    unit: attributes.unit,
+                    baseline: "text-after-edge",
+                }));
 
             // animate bars
             dataEnter.merge(dataJoin)
@@ -635,7 +693,7 @@ class visual
                 .remove();
         }
 
-        // upper
+        // lower
         {
             let dataJoin = node.selectAll("." + attributes.name[1]).data(data);
 
@@ -647,11 +705,21 @@ class visual
                 .attr("width", attributes.barWidth)
                 .attr("height", 0)
                 .attr("fill", attributes.color[1])
-                .attr("stroke-width", 0);
-
-            // add browser tooltip
-            dataEnter.append("title")
-                .text((d) => (d.toFixed(2) + "%"))
+                .attr("stroke-width", 0)
+                .on("mouseover", (d, i, list) => this.barMouseHover(node, [d], {
+                    name: attributes.name[1],
+                    x: attributes.xScale(attributes.ticks[i]) + attributes.xScale.bandwidth() / 2 + attributes.barWidth / 2,
+                    y: attributes.yScale(d),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }))
+                .on("mouseout", (d, i, list) => this.barMouseHover(node, [], {
+                    name: attributes.name[1],
+                    x: attributes.xScale(attributes.ticks[i]) + attributes.xScale.bandwidth() / 2 + attributes.barWidth / 2,
+                    y: attributes.yScale(d),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }));
 
             // animate bars
             dataEnter.merge(dataJoin)
@@ -680,11 +748,21 @@ class visual
                 .attr("width", attributes.barWidth)
                 .attr("height", 0)
                 .attr("fill", attributes.color[2])
-                .attr("stroke-width", 0);
-
-            // add browser tooltip
-            dataEnter.append("title")
-                .text((d) => (d[0].toFixed(2)));
+                .attr("stroke-width", 0)
+                .on("mouseover", (d, i, list) => this.barMouseHover(node, [d[0]], {
+                    name: attributes.name[2] + "Value",
+                    x: attributes.xScale(i + 1) + attributes.xScale.bandwidth() / 2 + attributes.barWidth * 1.5,
+                    y: attributes.yScale(d[0]),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }))
+                .on("mouseout", (d, i, list) => this.barMouseHover(node, [], {
+                    name: attributes.name[2] + "Value",
+                    x: attributes.xScale(i + 1) + attributes.xScale.bandwidth() / 2 + attributes.barWidth * 1.5,
+                    y: attributes.yScale(d[0]),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }));
 
             // animate bars
             dataEnter.merge(dataJoin)
@@ -739,11 +817,21 @@ class visual
                 .attr("width", attributes.barWidth)
                 .attr("height", 0)
                 .attr("fill", attributes.color[1])
-                .attr("stroke-width", 0);
-
-            // add browser tooltip
-            dataEnter.append("title")
-                .text((d) => (d[0].toFixed(2)));
+                .attr("stroke-width", 0)
+                .on("mouseover", (d, i, list) => this.barMouseHover(node, [d[0]], {
+                    name: attributes.name[1] + "Value",
+                    x: attributes.xScale(i + 1) + attributes.xScale.bandwidth() / 2 + attributes.barWidth * 0.5,
+                    y: attributes.yScale(d[0]),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }))
+                .on("mouseout", (d, i, list) => this.barMouseHover(node, [], {
+                    name: attributes.name[1] + "Value",
+                    x: attributes.xScale(i + 1) + attributes.xScale.bandwidth() / 2 + attributes.barWidth * 0.5,
+                    y: attributes.yScale(d[0]),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }));
 
             // animate bars
             dataEnter.merge(dataJoin)
@@ -798,11 +886,21 @@ class visual
                 .attr("width", attributes.barWidth)
                 .attr("height", 0)
                 .attr("fill", attributes.color[0])
-                .attr("stroke-width", 0);
-
-            // add browser tooltip
-            dataEnter.append("title")
-                .text((d) => (d[0].toFixed(2)));
+                .attr("stroke-width", 0)
+                .on("mouseover", (d, i, list) => this.barMouseHover(node, [d[0]], {
+                    name: attributes.name[0] + "Value",
+                    x: attributes.xScale(i + 1) + attributes.xScale.bandwidth() / 2 - attributes.barWidth * 0.5,
+                    y: attributes.yScale(d[0]),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }))
+                .on("mouseout", (d, i, list) => this.barMouseHover(node, [], {
+                    name: attributes.name[0] + "Value",
+                    x: attributes.xScale(i + 1) + attributes.xScale.bandwidth() / 2 - attributes.barWidth * 0.5,
+                    y: attributes.yScale(d[0]),
+                    unit: attributes.unit,
+                    baseline: "text-before-edge",
+                }));
 
             // animate bars
             dataEnter.merge(dataJoin)
@@ -854,6 +952,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.cumulativeSpending;
+        if (svg.empty())
+            return;
+
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -967,6 +1068,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.spendingPerMonth;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1045,6 +1149,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.cumulativeMealSpending;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1122,6 +1229,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.cumulativeAmenitySpending;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1199,6 +1309,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.spendingPerCategory;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1249,7 +1362,6 @@ class visual
         this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
 
         // render stacked bar chart
-        let previousHeight = [yScale.range()[0], yScale.range()[0], yScale.range()[0]];
         for (let j = 0; j < cats.length; ++j)
         {
             let data = this.state.vis.spendingPerCategory[cats[j]];
@@ -1263,22 +1375,30 @@ class visual
                 .attr("width", barWidth)
                 .attr("height", 0)
                 .attr("fill", colors[j])
-                .attr("stroke-width", 0);
-
-            // add browser tooltips
-            dataEnter.append("title")
-                .text((d) => (d[0].toFixed(2) + "%"));
+                .attr("stroke-width", 0)
+                .on("mouseover", (d, i, list) => this.barMouseHover(svg, [d[0]], {
+                    name: cats[j],
+                    x: xScale(ticks[i]) + xScale.bandwidth() / 2 + barWidth * 0.5,
+                    y: (yScale(d[1]) + yScale((j) ? this.state.vis.spendingPerCategory[cats[j-1]][i][1] : 0)) / 2,
+                    unit: "%",
+                    baseline: "middle",
+                }))
+                .on("mouseout", (d, i, list) => this.barMouseHover(svg, [], {
+                    name: cats[j],
+                    x: xScale(ticks[i]) + xScale.bandwidth() / 2 + barWidth * 0.5,
+                    y: (yScale(d[1]) + yScale((j) ? this.state.vis.spendingPerCategory[cats[j-1]][i][1] : 0)) / 2,
+                    unit: "%",
+                    baseline: "middle",
+                }));
 
             // animate bars
             dataEnter.merge(dataJoin)
                 .transition(t)
                 .attr("y", (d, i) => yScale(d[1]))
-                .attr("height", (d, i) => previousHeight[i] - yScale(d[1]));
+                .attr("height", (d, i) => yScale((j) ? this.state.vis.spendingPerCategory[cats[j-1]][i][1] : 0) - yScale(d[1]));
 
             dataJoin.exit()
                 .remove();
-
-            previousHeight = [yScale(data[0][1]), yScale(data[1][1]), yScale(data[2][1])];
         }
 
     }
@@ -1288,6 +1408,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.goodsVServices;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1329,7 +1452,7 @@ class visual
         }
 
         // axes
-        this.renderHeading(svg, {width: width}, "Goods Vs Services");
+        this.renderHeading(svg, {width: width}, "Goods VS Services");
         this.renderYLabel(svg, {padding: padding.left, height: (yScale.range()[0] + yScale.range()[1]) / 2}, "Percentage of Expenditure");
         this.renderXAxis(svg, {y: yScale.range()[0], xAxis: xAxis});
         this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
@@ -1337,6 +1460,7 @@ class visual
         // bars
         this.renderDoubleBar(svg, this.state.vis.goodsVServices, {
             name: ["goods", "services"],
+            unit: "%",
             ticks: ticks,
             color: [this.settings.colors_seq[0], this.settings.colors_seq[2]],
             xScale: xScale,
@@ -1351,6 +1475,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.onceVRegular;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1392,7 +1519,7 @@ class visual
         }
         
         // axes
-        this.renderHeading(svg, {width: width}, "Once Vs Regular");
+        this.renderHeading(svg, {width: width}, "Once VS Regular");
         this.renderYLabel(svg, {padding: padding.left, height: (yScale.range()[0] + yScale.range()[1]) / 2}, "Percentage of Expenditure");
         this.renderXAxis(svg, {y: yScale.range()[0], xAxis: xAxis});
         this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
@@ -1400,6 +1527,7 @@ class visual
         // bars
         this.renderDoubleBar(svg, this.state.vis.onceVRegular, {
             name: ["once", "regular"],
+            unit: "%",
             ticks: ticks,
             color: [this.settings.colors_seq[0], this.settings.colors_seq[2]],
             xScale: xScale,
@@ -1414,6 +1542,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.necessityVLuxury;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1455,7 +1586,7 @@ class visual
         }
         
         // exes
-        this.renderHeading(svg, {width: width}, "Necessity Vs Luxury");
+        this.renderHeading(svg, {width: width}, "Necessity VS Luxury");
         this.renderYLabel(svg, {padding: padding.left, height: (yScale.range()[0] + yScale.range()[1]) / 2}, "Percentage of Expenditure");
         this.renderXAxis(svg, {y: yScale.range()[0], xAxis: xAxis});
         this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
@@ -1463,6 +1594,7 @@ class visual
         // bars
         this.renderDoubleBar(svg, this.state.vis.necessityVLuxury, {
             name: ["necessity", "luxury"],
+            unit: "%",
             ticks: ticks,
             color: [this.settings.colors_seq[0], this.settings.colors_seq[2]],
             xScale: xScale,
@@ -1477,6 +1609,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.topAmount;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1529,6 +1664,7 @@ class visual
             this.state.vis.topProductsAmount.avg
         ], {
             name: ["currentBar", "lastBar", "avgBar"],
+            unit: this.settings.currency,
             color: [this.settings.colors_seq[0], this.settings.colors_seq[1], this.settings.colors_seq[2]],
             xScale: xScale,
             yScale: yScale,
@@ -1542,6 +1678,9 @@ class visual
     {
         // set parameters
         let svg = this.svgs.topCount;
+        if (svg.empty())
+            return;
+        
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
@@ -1594,6 +1733,7 @@ class visual
             this.state.vis.topProductsCount.avg
         ], {
             name: ["currentBar", "lastBar", "avgBar"],
+            unit: "",
             color: [this.settings.colors_seq[0], this.settings.colors_seq[1], this.settings.colors_seq[2]],
             xScale: xScale,
             yScale: yScale,
