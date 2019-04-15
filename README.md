@@ -4,7 +4,7 @@ FinPeeks is a tool, that allows you to take a peek into your financial Data.
 FinPeeks is written in JavaScript, using D3.
 
 ### Usage
-It's easy, just put a valid data file to the specified location and open `finPeaks.html` with your Browser.
+It's easy, just put a valid data file to the specified location and open `finPeeks.html` with your Browser.
 
 ### Requirements:
 - A modern web browser (only tested with Firefox 66.0.3)
