@@ -1,0 +1,102 @@
+<!Doctype html>
+<html>
+<!--
+    @license
+    Copyright (c) 2019 Tobias Mertz
+    This code may only be used under the terms of the BSD 3-Clause license.
+-->
+    <head>
+        <meta charset="utf-8" />
+        <style>
+            body {
+                font-family: Ubuntu, Calibri, Arial, sans-serif;
+                padding: 0px;
+                margin: 0px;
+                border-spacing: 0px;
+                background-color: whitesmoke;
+            }
+
+            svg {
+                width: 100%;
+            }
+
+            .header {
+                color: black;
+                background-color: lightblue;
+                padding: 0px;
+                margin: 0px;
+                border-bottom: 2px solid black;
+                text-align:center;
+                letter-spacing: 3pt;
+            }
+            .grid-container {
+                display: grid;
+                grid-template-areas:
+                    'cumulativeSpending spendingPerMonth'
+                    'cumulativeMealSpending cumulativeAmenitySpending'
+                    'spendingPerCategory topAmount'
+                    'spendingPerCategory topCount'
+                    'goodsVServices onceVRegular'
+                    'necessityVLuxury dummy';
+                grid-column-gap: 10pt;
+                grid-row-gap: 20pt;
+            }
+            .cumulativeSpending {
+                grid-area: cumulativeSpending;
+            }
+            .spendingPerMonth {
+                grid-area: spendingPerMonth;
+            }
+            .cumulativeMealSpending {
+                grid-area: cumulativeMealSpending;
+            }
+            .cumulativeAmenitySpending {
+                grid-area: cumulativeAmenitySpending;
+            }
+            .spendingPerCategory {
+                grid-area: spendingPerCategory;
+            }
+            .goodsVServices {
+                grid-area: goodsVServices;
+            }
+            .onceVRegular {
+                grid-area: onceVRegular;
+            }
+            .necessityVLuxury {
+                grid-area: necessityVLuxury;
+            }
+            .topAmount {
+                grid-area: topAmount;
+            }
+            .topCount {
+                grid-area: topCount;
+            }
+            .size {
+                height: 400px;
+            }
+            .doubleSize {
+                height: 800px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1 style="margin: 0px;">Fin Peeks</h1>
+            <p id="status">Loading...</p>
+        </div>
+        <div class="grid-container">
+            <svg class="cumulativeSpending size" id="cumulativeSpending"></svg>
+            <svg class="spendingPerMonth size" id="spendingPerMonth"></svg>
+            <svg class="cumulativeMealSpending size" id="cumulativeMealSpending"></svg>
+            <svg class="cumulativeAmenitySpending size" id="cumulativeAmenitySpending"></svg>
+            <svg class="spendingPerCategory doubleSize" id="spendingPerCategory"></svg>
+            <svg class="goodsVServices size" id="goodsVServices"></svg>
+            <svg class="onceVRegular size" id="onceVRegular"></svg>
+            <svg class="necessityVLuxury size" id="necessityVLuxury"></svg>
+            <svg class="topAmount size" id="topAmount"></svg>
+            <svg class="topCount size" id="topCount"></svg>
+        </div>
+        <script src="https://d3js.org/d3.v5.js"></script>
+        <script src="./finPeeks.js"></script>
+    </body>
+</html>
