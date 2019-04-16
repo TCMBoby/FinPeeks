@@ -30,4 +30,4 @@ An entry in a valid data File may look like this:
 ### Example Visualizations
 ![Visualization of Cumulative Expenses](screenshots/cumulative.jpg?raw=true)
 ![Visualization of Top 5 Products](screenshots/top.jpg?raw=true)
-![Visualization of Fractional Expenses](screenshots/cumulative.jpg?raw=true)
+![Visualization of Fractional Expenses](screenshots/fractional.jpg?raw=true)
