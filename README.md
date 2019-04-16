@@ -4,7 +4,8 @@ FinPeeks is a tool, that allows you to take a peek into your financial Data.
 FinPeeks is written in JavaScript, using D3.
 
 ### Usage
-It's easy, just put a valid data file to the specified location and open `finPeeks.html` with your Browser.
+Just put a valid data file to the specified location and open `finPeeks.html` with your Browser.
+Alternatively you can write your own html file. Just make sure, you include the `svg` elements with the appropriate ids as well as d3.
 
 ### Requirements:
 - A modern web browser (only tested with Firefox 66.0.3)
@@ -26,3 +27,7 @@ An entry in a valid data File may look like this:
 ```
   9 1 2019 4.80 Cafeteria g o n food
 ```
+### Example Visualizations
+![Visualization of Cumulative Expenses](screenshots/cumulative.jpg?raw=true)
+![Visualization of Top 5 Products](screenshots/top.jpg?raw=true)
+![Visualization of Fractional Expenses](screenshots/cumulative.jpg?raw=true)
