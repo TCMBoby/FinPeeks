@@ -444,9 +444,10 @@ class visual
     }
 
     // --------------------------------------------------------------------------------------------
-    // Mousevents
+    // Mouse events
     // --------------------------------------------------------------------------------------------
 
+    // renders a text label at the given position
     barMouseHover(node, data, attributes)
     {
         // hover text
@@ -581,10 +582,10 @@ class visual
 
         // legend border
         dataEnter.append("rect")
-            .attr("x", attributes.padding)
-            .attr("y", attributes.height - 25 * rows - 2)
-            .attr("width", attributes.legendWidth)
-            .attr("height", 25 * rows)
+            .attr("x", Math.floor(attributes.padding))
+            .attr("y", Math.floor(attributes.height - 25 * rows - 2))
+            .attr("width", Math.ceil(attributes.legendWidth))
+            .attr("height", Math.ceil(25 * rows))
             .attr("stroke-width", 1)
             .attr("stroke", "black")
             .attr("fill-opacity", 0);
@@ -597,18 +598,18 @@ class visual
 
             // color box
             dataEnter.append("rect")
-                .attr("x", attributes.padding + attributes.legendWidth * colId / cols + attributes.colorboxPadding)
-                .attr("y", attributes.height - 25 * (rows - rowId) + attributes.colorboxPadding)
-                .attr("width", attributes.colorboxSize)
-                .attr("height", attributes.colorboxSize)
+                .attr("x", Math.floor(attributes.padding + attributes.legendWidth * colId / cols + attributes.colorboxPadding))
+                .attr("y", Math.floor(attributes.height - 25 * (rows - rowId) + attributes.colorboxPadding))
+                .attr("width", Math.ceil(attributes.colorboxSize))
+                .attr("height", Math.ceil(attributes.colorboxSize))
                 .attr("stroke-width", 1)
                 .attr("stroke", "black")
                 .attr("fill", colors[i]);
 
             // label
             dataEnter.append("text")
-                .attr("x", attributes.padding + attributes.legendWidth * colId / cols + attributes.colorboxPadding * 2 + attributes.colorboxSize)
-                .attr("y", attributes.height - 25 * (rows - rowId) + attributes.colorboxPadding)
+                .attr("x", Math.floor(attributes.padding + attributes.legendWidth * colId / cols + attributes.colorboxPadding * 2 + attributes.colorboxSize))
+                .attr("y", Math.floor(attributes.height - 25 * (rows - rowId) + attributes.colorboxPadding))
                 .attr("dominant-baseline", "hanging")
                 .attr("text-anchor", "start")
                 .attr("font-family", this.settings.fontFamily)
@@ -969,12 +970,13 @@ class visual
         // create scales
         let xScale = d3.scaleLinear()
             .domain([0, 31])
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
 
         let yScale = d3.scaleLinear()
             .domain([0, maxval])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // income
@@ -1023,7 +1025,11 @@ class visual
                 padding: padding.left,
                 colSize: 200,
             };
-            let entries = ["Current Month", "Last Month", "Past Months Avg"];
+            let entries = [
+                "Current Month (" + this.state.vis.cumulativeSpending.current[31].toFixed(2) + this.settings.currency + ")",
+                "Last Month (" + this.state.vis.cumulativeSpending.last[31].toFixed(2) + this.settings.currency + ")",
+                "Past Months Avg (" + this.state.vis.cumulativeSpending.avg[31].toFixed(2) + this.settings.currency + ")"
+            ];
             let colors = [this.settings.colors_seq[0], this.settings.colors_seq[1], this.settings.colors_seq[2]];
             this.renderLegend(svg, attributes, entries, colors);
         }
@@ -1092,13 +1098,14 @@ class visual
         // create scales
         let xScale = d3.scaleTime()
             .domain([dates[0], dates[dates.length - 1]])
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale)
             .tickFormat(d3.timeFormat("%b-%Y"));
 
         let yScale = d3.scaleLinear()
             .domain([0, maxval])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1166,12 +1173,13 @@ class visual
         // create scales
         let xScale = d3.scaleLinear()
             .domain([0, 31])
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
 
         let yScale = d3.scaleLinear()
             .domain([0, maxval])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1184,7 +1192,11 @@ class visual
                 padding: padding.left,
                 colSize: 200,
             };
-            let entries = ["Current Month", "Last Month", "Past Months Avg"];
+            let entries = [
+                "Current Month (" + this.state.vis.cumulativeMealSpending.current[31].toFixed(2) + this.settings.currency + ")",
+                "Last Month (" + this.state.vis.cumulativeMealSpending.last[31].toFixed(2) + this.settings.currency + ")",
+                "Past Months Avg (" + this.state.vis.cumulativeMealSpending.avg[31].toFixed(2) + this.settings.currency + ")"
+            ];
             let colors = [this.settings.colors_seq[0], this.settings.colors_seq[1], this.settings.colors_seq[2]];
             this.renderLegend(svg, attributes, entries, colors);
         }
@@ -1246,12 +1258,13 @@ class visual
         // create scales
         let xScale = d3.scaleLinear()
             .domain([0, 31])
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
 
         let yScale = d3.scaleLinear()
             .domain([0, maxval])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1264,7 +1277,11 @@ class visual
                 padding: padding.left,
                 colSize: 200,
             };
-            let entries = ["Current Month", "Last Month", "Past Months Avg"];
+            let entries = [
+                "Current Month (" + this.state.vis.cumulativeAmenitySpending.current[31].toFixed(2) + this.settings.currency + ")",
+                "Last Month (" + this.state.vis.cumulativeAmenitySpending.last[31].toFixed(2) + this.settings.currency + ")",
+                "Past Months Avg (" + this.state.vis.cumulativeAmenitySpending.avg[31].toFixed(2) + this.settings.currency + ")"
+            ];
             let colors = [this.settings.colors_seq[0], this.settings.colors_seq[1], this.settings.colors_seq[2]];
             this.renderLegend(svg, attributes, entries, colors);
         }
@@ -1333,12 +1350,12 @@ class visual
         // create scales
         let xScale = d3.scaleBand()
             .domain(ticks)
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
         
         let yScale = d3.scaleLinear()
             .domain([0, 100])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(10);
 
         // legend
@@ -1428,12 +1445,12 @@ class visual
         // create scales
         let xScale = d3.scaleBand()
             .domain(ticks)
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
         
         let yScale = d3.scaleLinear()
             .domain([0, 100])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1495,12 +1512,12 @@ class visual
         // create scales
         let xScale = d3.scaleBand()
             .domain(ticks)
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
         
         let yScale = d3.scaleLinear()
             .domain([0, 100])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1562,12 +1579,12 @@ class visual
         // create scales
         let xScale = d3.scaleBand()
             .domain(ticks)
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
         
         let yScale = d3.scaleLinear()
             .domain([0, 100])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1627,12 +1644,13 @@ class visual
         // create scales
         let xScale = d3.scaleBand()
             .domain([1, 2, 3, 4, 5])
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
         
         let yScale = d3.scaleLinear()
             .domain([0, maxval])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1696,12 +1714,13 @@ class visual
         // create scales
         let xScale = d3.scaleBand()
             .domain([1, 2, 3, 4, 5])
-            .range([padding.left, width - padding.right]);
+            .rangeRound([padding.left, width - padding.right]);
         let xAxis = d3.axisBottom(xScale);
         
         let yScale = d3.scaleLinear()
             .domain([0, maxval])
-            .range([height - padding.bottom, padding.top]);
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // legend
@@ -1772,14 +1791,28 @@ class visual
 
 let vis = new visual();
 
-// async loading of the data file
-let pString = d3.text(vis.settings.filename);
-pString.then((d) => {
-    // csv parsing and array conversion
-    let dsv = d3.dsvFormat(vis.settings.separator);
-    let rawData = dsv.parseRows(d);
-    // data processing
-    vis.formatData(rawData);
-    // visualization
-    vis.render();
-});
+function handleFileSelect(evt) {
+    let file = evt.target.files[0];
+    let reader = new FileReader();
+
+    reader.onloadstart = (d) => {
+        vis.statusLine.text("Loading...");
+    };
+
+    reader.onloadend = (evt) => {
+        if (evt.target.readyState == FileReader.DONE) {
+            let d = evt.target.result;
+            // csv parsing and array conversion
+            let dsv = d3.dsvFormat(vis.settings.separator);
+            let rawData = dsv.parseRows(d);
+            // data processing
+            vis.formatData(rawData);
+            // visualization
+            vis.render();
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+document.getElementById("inputButton").addEventListener("change", handleFileSelect, false);
