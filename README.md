@@ -4,7 +4,7 @@ FinPeeks is a tool, that allows you to take a peek into your financial Data.
 FinPeeks is written in JavaScript, using D3.
 
 ### Usage
-Just put a valid data file to the specified location and open `finPeeks.html` with your Browser.
+Just open the `index.html` file or visit [the FinPeeks webhost](https://tcmboby.github.io/FinPeeks/) and select your data file with the file browser.
 Alternatively you can write your own html file. Just make sure, you include the `svg` elements with the appropriate ids as well as d3.
 
 ### Requirements:
@@ -13,8 +13,8 @@ Alternatively you can write your own html file. Just make sure, you include the 
 
 ### Data:
 Your data is read from a .dsv file.
-The path to the file and the delimiter have to be set within the settings-object in the script.
-(Default path is "./data/exampleData.csv" and the default delimiter is " ")
+The Delimiter of your file have to be set within the settings-object in the script.
+(The default delimiter is " ")
 The data has to have the following format:
 ```
   Day Month Year Amount Product-name Flag1 Flag2 Flag3 Category
@@ -27,6 +27,9 @@ An entry in a valid data File may look like this:
 ```
   9 1 2019 4.80 Cafeteria g o n food
 ```
+
+An example data file can be found [here](https://github.com/TCMBoby/FinPeeks/blob/master/data/exampleData.csv).
+
 ### Example Visualizations
 ![Visualization of Cumulative Expenses](screenshots/cumulative.jpg?raw=true)
 ![Visualization of Top 5 Products](screenshots/top.jpg?raw=true)
