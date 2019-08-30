@@ -62,9 +62,9 @@ class visual
             .style("z-index", 1)
             .style("visibility", "hidden")
             .style("width", "auto")
-            .style("height", "auto")
+            .style("height", "40px")
             .style("background-color", this.settings.colors_text)
-            .style("opacity", 0.5)
+            .style("opacity", 0.6)
             .style("pointer-events", "none");
 
         this.state = {
@@ -517,10 +517,10 @@ class visual
         dataJoin.enter()
             .append("rect")
             .attr("class", "overlay")
-            .attr("x", attributes.x)
-            .attr("y", attributes.y)
-            .attr("width", attributes.width)
-            .attr("height", attributes.height)
+            .attr("x", attributes.xScale.range()[0])
+            .attr("y", attributes.yScale.range()[1])
+            .attr("width", (attributes.xScale.range()[1] - attributes.xScale.range()[0]))
+            .attr("height", (attributes.yScale.range()[0] - attributes.yScale.range()[1]))
             .attr("fill-opacity", 0)
             .on("mouseover", (d, i, list) => (attributes.mouseOver) ? attributes.mouseOver(node, data, attributes) : null)
             .on("mouseout", (d, i, list) => (attributes.mouseOut) ? attributes.mouseOut(node, data, attributes) : null)
@@ -543,10 +543,10 @@ class visual
             .attr("class", "crosshairLine")
             .attr("stroke", this.settings.colors_text)
             .attr("stroke-width", 1)
-            .attr("x1", (d, i) => (i) ? attributes.x : d)
-            .attr("y1", (d, i) => (i) ? d : attributes.y)
-            .attr("x2", (d, i) => (i) ? (attributes.x + attributes.width) : d)
-            .attr("y2", (d, i) => (i) ? d : (attributes.y + attributes.height));
+            .attr("x1", (d, i) => (i) ? attributes.xScale.range()[0] : d)
+            .attr("y1", (d, i) => (i) ? d : attributes.yScale.range()[1])
+            .attr("x2", (d, i) => (i) ? attributes.xScale.range()[1] : d)
+            .attr("y2", (d, i) => (i) ? d : attributes.yScale.range()[0]);
 
         dataJoin.exit()
             .remove();
@@ -556,18 +556,27 @@ class visual
             this.tooltip
                 .style("visibility", null)
                 .style("left", absPosition[0] + "px")
-                .style("top", absPosition[1] + "px");
+                .style("top", absPosition[1] - 40 + "px");
         }
         else
             this.tooltip.style("visibility", "hidden");
 
-        let textJoin = this.tooltip.selectAll(".tooltipText").data((attributes.draw) ? [position[0] + ", " + position[1]] : []);
+        let textJoin = this.tooltip.selectAll(".tooltipText").data((attributes.draw) ? [[position[0], position[1]]] : []);
 
         textJoin.enter()
             .append("p")
             .attr("class", "tooltipText")
             .style("color", this.settings.colors_background)
-            .text((d) => d);
+            .style("margin-top", "0px")
+            .style("margin-bottom", "0px")
+            .style("margin-right", "5px")
+            .style("margin-left", "5px")
+            .style("padding", "0px")
+            .html((d) => "Day: "
+                + Math.floor(attributes.xScale.invert(d[0]))
+                + "<br />Amount: "
+                + attributes.yScale.invert(d[1]).toFixed(2)
+                + this.settings.currency);
 
         textJoin.exit()
             .remove();
@@ -577,24 +586,28 @@ class visual
     renderCrosshair(node, data, attributes)
     {
         let position = d3.mouse(node.node());
-         let absPosition = [ d3.event.pageX, d3.event.pageY ];
+        let absPosition = [ d3.event.pageX, d3.event.pageY ];
         
         let dataJoin = node.select(".crosshairGroup").selectAll(".crosshairLine").data(position);
 
         dataJoin
-            .attr("x1", (d, i) => (i) ? attributes.x : d)
-            .attr("y1", (d, i) => (i) ? d : attributes.y)
-            .attr("x2", (d, i) => (i) ? (attributes.x + attributes.width) : d)
-            .attr("y2", (d, i) => (i) ? d : (attributes.y + attributes.height));
+            .attr("x1", (d, i) => (i) ? attributes.xScale.range()[0] : d)
+            .attr("y1", (d, i) => (i) ? d : attributes.yScale.range()[1])
+            .attr("x2", (d, i) => (i) ? attributes.xScale.range()[1] : d)
+            .attr("y2", (d, i) => (i) ? d : attributes.yScale.range()[0]);
 
         this.tooltip
             .style("left", absPosition[0] + "px")
-            .style("top", absPosition[1] + "px");
+            .style("top", absPosition[1] - 40 + "px");
 
-        let textJoin = this.tooltip.selectAll(".tooltipText").data([position[0] + ", " + position[1]]);
+        let textJoin = this.tooltip.selectAll(".tooltipText").data([[position[0], position[1]]]);
 
         textJoin
-            .text((d) => d);
+            .html((d) => "Day: "
+                + Math.floor(attributes.xScale.invert(d[0]))
+                + "<br />Amount: "
+                + attributes.yScale.invert(d[1]).toFixed(2)
+                + this.settings.currency);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -1196,11 +1209,10 @@ class visual
             t: t,
         });
 
+        // mouse over tooltip overlay
         this.addOverlay(svg, this.state.vis.cumulativeSpending, {
-            x: xScale.range()[0],
-            y: yScale.range()[1],
-            width: xScale.range()[1] - xScale.range()[0],
-            height: yScale.range()[0] - yScale.range()[1],
+            xScale: xScale,
+            yScale: yScale,
             mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
             mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
             mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
@@ -1287,6 +1299,15 @@ class visual
             color: this.settings.colors_seq[0],
             t: t,
         });
+
+        // mouse over tooltip overlay
+        this.addOverlay(svg, this.state.vis.cumulativeSpending, {
+            xScale: xScale,
+            yScale: yScale,
+            mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
+            mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
+            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
+        });
     }
 
     // main rendering function for the cumulative meal spending visualization
@@ -1372,6 +1393,15 @@ class visual
             color: this.settings.colors_seq[0],
             t: t,
         });
+
+        // mouse over tooltip overlay
+        this.addOverlay(svg, this.state.vis.cumulativeSpending, {
+            xScale: xScale,
+            yScale: yScale,
+            mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
+            mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
+            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
+        });
     }
 
     // main rendering function for the cumulative amenity spending visualization
@@ -1456,6 +1486,15 @@ class visual
             yScale: yScale,
             color: this.settings.colors_seq[0],
             t: t,
+        });
+
+        // mouse over tooltip overlay
+        this.addOverlay(svg, this.state.vis.cumulativeSpending, {
+            xScale: xScale,
+            yScale: yScale,
+            mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
+            mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
+            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
         });
     }
 
