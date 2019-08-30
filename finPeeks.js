@@ -14,7 +14,6 @@ class visual
     constructor()
     {
         this.settings = {
-            filename: "./data/exampleData.csv",
             separator: " ",
             income: 600.0,
             saving: 100.0,
@@ -57,6 +56,17 @@ class visual
         };
 
         this.statusLine = d3.select("#status");
+
+        this.tooltip = d3.select(".tooltip")
+            .style("position", "absolute")
+            .style("z-index", 1)
+            .style("visibility", "hidden")
+            .style("width", "auto")
+            .style("height", "auto")
+            .style("background-color", this.settings.colors_text)
+            .style("opacity", 0.5)
+            .style("pointer-events", "none");
+
         this.state = {
             data: [],
             error: false,
@@ -468,6 +478,123 @@ class visual
 
         textJoin.exit()
             .remove();
+
+        // let top = d3.event.pageY;
+        // let left = d3.event.pageX;
+
+        // if (data.length)
+        // {
+        //     this.tooltip
+        //         .style("visibility", null)
+        //         .style("left", left + "px")
+        //         .style("top", top + "px");
+        // }
+        // else
+        //     this.tooltip.style("visibility", "hidden");
+
+        // let textJoin = this.tooltip.selectAll(".tooltipText").data(data);
+
+        // textJoin.enter()
+        //     .append("p")
+        //     .attr("class", "tooltipText")
+        //     .style("color", this.settings.colors_background)
+        //     .text((d) => (d.toFixed(2) + attributes.unit));
+
+        // textJoin.exit()
+        //     .remove();
+    }
+
+    // adds an invisible overlay to the visualization, with given event listeners
+    addOverlay(node, data, attributes)
+    {
+        let dataJoin = node.selectAll(".Overlay").data([0]);
+        
+        dataJoin.enter()
+            .append("g")
+            .attr("class", "crosshairGroup")
+            .attr("shape-rendering", "crispEdges");
+        
+        dataJoin.enter()
+            .append("rect")
+            .attr("class", "overlay")
+            .attr("x", attributes.x)
+            .attr("y", attributes.y)
+            .attr("width", attributes.width)
+            .attr("height", attributes.height)
+            .attr("fill-opacity", 0)
+            .on("mouseover", (d, i, list) => (attributes.mouseOver) ? attributes.mouseOver(node, data, attributes) : null)
+            .on("mouseout", (d, i, list) => (attributes.mouseOut) ? attributes.mouseOut(node, data, attributes) : null)
+            .on("mousemove", (d, i, list) => (attributes.mouseMove) ? attributes.mouseMove(node, data, attributes) : null);
+
+        dataJoin.exit()
+            .remove();
+    }
+
+    // toggles display of crosshair
+    toggleCrosshair(node, data, attributes)
+    {
+        let position = d3.mouse(node.node());
+        let absPosition = [ d3.event.pageX, d3.event.pageY ];
+
+        let dataJoin = node.select(".crosshairGroup").selectAll(".crosshairLine").data((attributes.draw) ? position : []);
+
+        dataJoin.enter()
+            .append("line")
+            .attr("class", "crosshairLine")
+            .attr("stroke", this.settings.colors_text)
+            .attr("stroke-width", 1)
+            .attr("x1", (d, i) => (i) ? attributes.x : d)
+            .attr("y1", (d, i) => (i) ? d : attributes.y)
+            .attr("x2", (d, i) => (i) ? (attributes.x + attributes.width) : d)
+            .attr("y2", (d, i) => (i) ? d : (attributes.y + attributes.height));
+
+        dataJoin.exit()
+            .remove();
+
+        if (attributes.draw)
+        {
+            this.tooltip
+                .style("visibility", null)
+                .style("left", absPosition[0] + "px")
+                .style("top", absPosition[1] + "px");
+        }
+        else
+            this.tooltip.style("visibility", "hidden");
+
+        let textJoin = this.tooltip.selectAll(".tooltipText").data((attributes.draw) ? [position[0] + ", " + position[1]] : []);
+
+        textJoin.enter()
+            .append("p")
+            .attr("class", "tooltipText")
+            .style("color", this.settings.colors_background)
+            .text((d) => d);
+
+        textJoin.exit()
+            .remove();
+    }
+
+    // moves crosshair to position
+    renderCrosshair(node, data, attributes)
+    {
+        let position = d3.mouse(node.node());
+         let absPosition = [ d3.event.pageX, d3.event.pageY ];
+        
+        let dataJoin = node.select(".crosshairGroup").selectAll(".crosshairLine").data(position);
+
+        dataJoin
+            .attr("x1", (d, i) => (i) ? attributes.x : d)
+            .attr("y1", (d, i) => (i) ? d : attributes.y)
+            .attr("x2", (d, i) => (i) ? (attributes.x + attributes.width) : d)
+            .attr("y2", (d, i) => (i) ? d : (attributes.y + attributes.height));
+
+        this.tooltip
+            .style("left", absPosition[0] + "px")
+            .style("top", absPosition[1] + "px");
+
+        let textJoin = this.tooltip.selectAll(".tooltipText").data([position[0] + ", " + position[1]]);
+
+        textJoin
+            .text((d) => d);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -578,7 +705,8 @@ class visual
 
         let dataEnter = dataJoin.enter()
             .append("g")
-            .attr("class", "legend");
+            .attr("class", "legend")
+            .attr("shape-rendering", "crispEdges");
 
         // legend border
         dataEnter.append("rect")
@@ -1066,6 +1194,16 @@ class visual
             yScale: yScale,
             color: this.settings.colors_div[0],
             t: t,
+        });
+
+        this.addOverlay(svg, this.state.vis.cumulativeSpending, {
+            x: xScale.range()[0],
+            y: yScale.range()[1],
+            width: xScale.range()[1] - xScale.range()[0],
+            height: yScale.range()[0] - yScale.range()[1],
+            mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
+            mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
+            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
         });
     }
     
