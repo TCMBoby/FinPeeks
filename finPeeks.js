@@ -65,6 +65,7 @@ class visual
             .style("height", "40px")
             .style("background-color", this.settings.colors_text)
             .style("opacity", 0.7)
+            .style("border-radius", "7px")
             .style("pointer-events", "none");
 
         this.tooltip.append("p")
@@ -537,8 +538,8 @@ class visual
         {
             this.tooltip
                 .style("visibility", null)
-                .style("left", absPosition[0] + "px")
-                .style("top", absPosition[1] - 40 + "px");
+                .style("left", +(absPosition[0] + 4) + "px")
+                .style("top", +(absPosition[1] - 44) + "px");
         }
         else
             this.tooltip.style("visibility", "hidden");
@@ -559,8 +560,8 @@ class visual
             .attr("y2", (d, i) => (i) ? d : attributes.yScale.range()[0]);
 
         this.tooltip
-            .style("left", absPosition[0] + "px")
-            .style("top", absPosition[1] - 40 + "px");
+            .style("left", +(absPosition[0] + 4) + "px")
+            .style("top", +(absPosition[1] - 44) + "px");
     }
 
     // fills the tooltip with info about the amount per day
@@ -1519,7 +1520,6 @@ class visual
             top: 50,
             bottom: 105,
         }
-        let barWidth = 50;
         let t = d3.transition().duration(this.settings.transitionTime);
         
         // create utility arrays
@@ -1539,6 +1539,8 @@ class visual
             .domain([0, 100])
             .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(10);
+
+        let barWidth = xScale.bandwidth() / 5;
 
         // legend
         {
@@ -1618,7 +1620,6 @@ class visual
             top: 50,
             bottom: 75,
         }
-        let barWidth = 50;
         let t = d3.transition().duration(this.settings.transitionTime);
 
         // create utility array
@@ -1634,6 +1635,8 @@ class visual
             .domain([0, 100])
             .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(5);
+        
+        let barWidth = xScale.bandwidth() / 5;
 
         // legend
         {
@@ -1685,7 +1688,6 @@ class visual
             top: 50,
             bottom: 75,
         }
-        let barWidth = 50;
         let t = d3.transition().duration(this.settings.transitionTime);
 
         // create utility array
@@ -1701,6 +1703,8 @@ class visual
             .domain([0, 100])
             .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(5);
+
+        let barWidth = xScale.bandwidth() / 5;
 
         // legend
         {
@@ -1752,7 +1756,6 @@ class visual
             top: 50,
             bottom: 75,
         }
-        let barWidth = 50;
         let t = d3.transition().duration(this.settings.transitionTime);
 
         // create utility array
@@ -1768,6 +1771,8 @@ class visual
             .domain([0, 100])
             .rangeRound([height - padding.bottom, padding.top]);
         let yAxis = d3.axisLeft(yScale).ticks(5);
+
+        let barWidth = xScale.bandwidth() / 5;
 
         // legend
         {
@@ -1819,7 +1824,6 @@ class visual
             top: 50,
             bottom: 75,
         }
-        let barWidth = 30;
         let t = d3.transition().duration(this.settings.transitionTime);
         let maxval = Math.max(this.state.vis.topProductsAmount.current[0][0], this.state.vis.topProductsAmount.last[0][0], this.state.vis.topProductsAmount.avg[0][0]) * 1.2;
 
@@ -1834,7 +1838,9 @@ class visual
             .rangeRound([height - padding.bottom, padding.top])
             .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
-
+        
+        let barWidth = xScale.bandwidth() / 4.5;
+        
         // legend
         {
             let attributes = {
@@ -1889,7 +1895,6 @@ class visual
             top: 50,
             bottom: 75,
         }
-        let barWidth = 30;
         let t = d3.transition().duration(this.settings.transitionTime);
         let maxval = Math.max(this.state.vis.topProductsCount.current[0][0], this.state.vis.topProductsCount.last[0][0], this.state.vis.topProductsCount.avg[0][0]) * 1.2;
 
@@ -1904,6 +1909,8 @@ class visual
             .rangeRound([height - padding.bottom, padding.top])
             .nice();
         let yAxis = d3.axisLeft(yScale).ticks(5);
+
+        let barWidth = xScale.bandwidth() / 4.5;
 
         // legend
         {
