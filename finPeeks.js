@@ -64,8 +64,11 @@ class visual
             .style("width", "auto")
             .style("height", "40px")
             .style("background-color", this.settings.colors_text)
-            .style("opacity", 0.6)
+            .style("opacity", 0.7)
             .style("pointer-events", "none");
+
+        this.tooltip.append("p")
+            .attr("class", "tooltipText");
 
         this.state = {
             data: [],
@@ -460,48 +463,27 @@ class visual
     // renders a text label at the given position
     barMouseHover(node, data, attributes)
     {
-        // hover text
-        let textJoin = node.selectAll("." + attributes.name + "Text").data(data);
+        let position = d3.mouse(node.node());
+        let nodePos = [d3.event.pageX - position[0], d3.event.pageY - position[1]];
 
-        textJoin.enter()
-            .append("text")
-            .attr("class", attributes.name + "Text")
-            .attr("x", attributes.x)
-            .attr("y", attributes.y)
-            .attr("dominant-baseline", attributes.baseline)
-            .attr("text-align", "start")
-            .attr("font-family", this.settings.fontFamily)
-            .attr("font-size", 12)
-            .attr("fill", this.settings.colors_text)
-            .attr("mouse-events", "none")
-            .text((d) => (d.toFixed(2) + attributes.unit));
+        if (data.length)
+        {
+            this.tooltip
+                .style("visibility", null)
+                .style("left", nodePos[0] + attributes.x + "px")
+                .style("top", nodePos[1] + attributes.y - 20 + "px");
 
-        textJoin.exit()
-            .remove();
-
-        // let top = d3.event.pageY;
-        // let left = d3.event.pageX;
-
-        // if (data.length)
-        // {
-        //     this.tooltip
-        //         .style("visibility", null)
-        //         .style("left", left + "px")
-        //         .style("top", top + "px");
-        // }
-        // else
-        //     this.tooltip.style("visibility", "hidden");
-
-        // let textJoin = this.tooltip.selectAll(".tooltipText").data(data);
-
-        // textJoin.enter()
-        //     .append("p")
-        //     .attr("class", "tooltipText")
-        //     .style("color", this.settings.colors_background)
-        //     .text((d) => (d.toFixed(2) + attributes.unit));
-
-        // textJoin.exit()
-        //     .remove();
+            this.tooltip.select(".tooltipText")
+                .style("color", this.settings.colors_background)
+                .style("margin-top", "10px")
+                .style("margin-bottom", "0px")
+                .style("margin-right", "5px")
+                .style("margin-left", "5px")
+                .style("padding", "0px")
+                .html(data[0].toFixed(2) + attributes.unit);
+        }
+        else
+            this.tooltip.style("visibility", "hidden");
     }
 
     // adds an invisible overlay to the visualization, with given event listeners
@@ -560,26 +542,6 @@ class visual
         }
         else
             this.tooltip.style("visibility", "hidden");
-
-        let textJoin = this.tooltip.selectAll(".tooltipText").data((attributes.draw) ? [[position[0], position[1]]] : []);
-
-        textJoin.enter()
-            .append("p")
-            .attr("class", "tooltipText")
-            .style("color", this.settings.colors_background)
-            .style("margin-top", "0px")
-            .style("margin-bottom", "0px")
-            .style("margin-right", "5px")
-            .style("margin-left", "5px")
-            .style("padding", "0px")
-            .html((d) => "Day: "
-                + Math.floor(attributes.xScale.invert(d[0]))
-                + "<br />Amount: "
-                + attributes.yScale.invert(d[1]).toFixed(2)
-                + this.settings.currency);
-
-        textJoin.exit()
-            .remove();
     }
 
     // moves crosshair to position
@@ -599,14 +561,45 @@ class visual
         this.tooltip
             .style("left", absPosition[0] + "px")
             .style("top", absPosition[1] - 40 + "px");
+    }
 
-        let textJoin = this.tooltip.selectAll(".tooltipText").data([[position[0], position[1]]]);
+    // fills the tooltip with info about the amount per day
+    dayTooltipText(node, data, attributes)
+    {
+        let position = d3.mouse(node.node());
 
-        textJoin
-            .html((d) => "Day: "
-                + Math.floor(attributes.xScale.invert(d[0]))
+        this.tooltip.select(".tooltipText")
+            .style("color", this.settings.colors_background)
+            .style("margin-top", "0px")
+            .style("margin-bottom", "0px")
+            .style("margin-right", "5px")
+            .style("margin-left", "5px")
+            .style("padding", "0px")
+            .html("Day: "
+                + Math.floor(attributes.xScale.invert(position[0]))
                 + "<br />Amount: "
-                + attributes.yScale.invert(d[1]).toFixed(2)
+                + attributes.yScale.invert(position[1]).toFixed(2)
+                + this.settings.currency);
+    }
+
+    // fills the tooltip with info about the amount per month
+    monthTooltipText(node, data, attributes)
+    {
+        let position = d3.mouse(node.node());
+
+        let date = attributes.xScale.invert(position[0]);
+
+        this.tooltip.select(".tooltipText")
+            .style("color", this.settings.colors_background)
+            .style("margin-top", "0px")
+            .style("margin-bottom", "0px")
+            .style("margin-right", "5px")
+            .style("margin-left", "5px")
+            .style("padding", "0px")
+            .html("Month: "
+                + +(date.getMonth() + 1) + "-" + date.getFullYear()
+                + "<br />Amount: "
+                + attributes.yScale.invert(position[1]).toFixed(2)
                 + this.settings.currency);
     }
 
@@ -1215,7 +1208,10 @@ class visual
             yScale: yScale,
             mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
             mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
-            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
+            mouseMove: (node, data, attributes) => {
+                this.renderCrosshair(node, data, attributes);
+                this.dayTooltipText(node, data, attributes);
+            },
         });
     }
     
@@ -1244,7 +1240,7 @@ class visual
             .map((d) => d + this.state.first.nMonth)
             .map((d) => [Math.floor(d / 12), d % 12])
             .map((d) => timeParse(d[1] + "-" + d[0]));
-        
+
         // create scales
         let xScale = d3.scaleTime()
             .domain([dates[0], dates[dates.length - 1]])
@@ -1306,7 +1302,10 @@ class visual
             yScale: yScale,
             mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
             mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
-            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
+            mouseMove: (node, data, attributes) => {
+                this.renderCrosshair(node, data, attributes);
+                this.monthTooltipText(node, data, attributes);
+            },
         });
     }
 
@@ -1400,7 +1399,10 @@ class visual
             yScale: yScale,
             mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
             mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
-            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
+            mouseMove: (node, data, attributes) => {
+                this.renderCrosshair(node, data, attributes);
+                this.dayTooltipText(node, data, attributes);
+            },
         });
     }
 
@@ -1494,7 +1496,10 @@ class visual
             yScale: yScale,
             mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
             mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
-            mouseMove: (node, data, attributes) => { this.renderCrosshair(node, data, attributes) },
+            mouseMove: (node, data, attributes) => {
+                this.renderCrosshair(node, data, attributes);
+                this.dayTooltipText(node, data, attributes);
+            },
         });
     }
 
