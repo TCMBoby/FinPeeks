@@ -46,6 +46,7 @@
 31 1 2019 4.80 Cafeteria g o n food
 31 1 2019 0.8 Coffee g o l food
 31 1 2019 400.0 Rent s r n living
+31 1 2019 -600.0
 1 2 2019 4.80 Cafeteria g o n food
 2 2 2019 4.80 Cafeteria g o n food
 3 2 2019 1.2 Water g o n food
@@ -82,6 +83,7 @@
 28 2 2019 0.8 Coffee g o n food
 28 2 2019 0.8 Coffee g o l food
 28 2 2019 400.0 Rent s r n living
+28 2 2019 -600.0
 1 3 2019 0.8 Coffee g o l food
 1 3 2019 1.2 Water g o n food
 1 3 2019 1.37 Cheese g o n food
@@ -121,3 +123,4 @@
 29 3 2019 4.80 Cafeteria g o n food
 30 3 2019 16.0 Burger g o l food
 31 3 2019 400.0 Rent s r n living
+31 3 2019 -600.0

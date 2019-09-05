@@ -15,9 +15,7 @@ class visual
     {
         this.settings = {
             separator: " ",
-            income: 600.0,
             saving: 100.0,
-            get budget() { return this.income - this.saving; },
             month_offset: 0,
             colors_seq: ["#2171b5", "#6baed6", "#bdd7e7"],
             colors_div: ["#2166ac", "#67a9cf", "#d1e5f0", "#fddbc7", "#ef8a62", "#b2182b"],
@@ -44,6 +42,7 @@ class visual
 
         this.svgs = {
             cumulativeSpending: d3.select("#cumulativeSpending"),
+            cumulativeSaldo: d3.select("#cumulativeSaldo"),
             spendingPerMonth: d3.select("#spendingPerMonth"),
             cumulativeMealSpending: d3.select("#cumulativeMealSpending"),
             cumulativeAmenitySpending: d3.select("#cumulativeAmenitySpending"),
@@ -73,6 +72,7 @@ class visual
 
         this.state = {
             data: [],
+            income: [],
             error: false,
             message: "",
         };
@@ -132,6 +132,8 @@ class visual
             total: Array(this.state.months).fill(0),
             meal: Array(this.state.months).fill(0),
         };
+        this.state.vis.incomePerMonth = Array(this.state.months).fill(0);
+        this.state.vis.cumulativeSaldo = Array(this.state.months).fill(0);
         this.state.vis.cumulativeSpending = {
             "current": Array(32).fill(0),
             "last": Array(32).fill(0),
@@ -215,7 +217,7 @@ class visual
                 {
                     if  (this.state.categories[j] === d.category)
                         spendingPerCategory[key][j] += d.amount;
-                }
+                };
 
                 for (let j = 0; j < this.state.products.length; ++j)
                 {
@@ -225,12 +227,27 @@ class visual
                         topCount[key][j] += 1;
                     }
                 }
-            }
+            };
 
             addToKey(d, key, nkey);
             // the last month also accumulated in the past avg
             if (key === "last")
                 addToKey(d, "avg", 2);
+        }
+
+        // fill income array
+        for (let i = 0; i < this.state.income.length; ++i)
+        {
+            let d = this.state.income[i];
+            this.state.vis.incomePerMonth[d.nMonth - this.state.first.nMonth] -= d.amount;
+        }
+
+        // fill saldo array
+        for (let i = 0; i < this.state.months; ++i)
+        {
+            this.state.vis.cumulativeSaldo[i] = this.state.vis.incomePerMonth[i] - this.state.vis.spendingPerMonth.total[i];
+            if (i)
+                this.state.vis.cumulativeSaldo[i] += this.state.vis.cumulativeSaldo[i-1];
         }
 
         // format data arrays
@@ -404,29 +421,45 @@ class visual
     {
         // convert arrays to objects
         rawData.forEach((d) => {
-            if ((d.length != 9)
-             || ((d[5] != 'g') && (d[5] != 's'))
-             || ((d[6] != 'o') && (d[6] != 'r'))
-             || ((d[7] != 'n') && (d[7] != 'l'))
-             || isNaN(d[0])
+            if (isNaN(d[0])
              || isNaN(d[1])
              || isNaN(d[2])
              || isNaN(d[3]))
                 return;
 
-            this.state.data.push({
-                day: +d[0],
-                month: +d[1],
-                year: +d[2],
-                amount: +d[3],
-                product: d[4],
-                gs: (d[5] === 'g'),
-                or: (d[6] === 'o'),
-                nl: (d[7] === 'n'),
-                category: d[8],
-                get date() { return ((this.year * 12) + this.month) * 31 + this.day; },
-                get nMonth() { return (this.year * 12) + this.month; },
-            });
+            if (+d[3] < 0)
+            {
+                this.state.income.push({
+                    day: +d[0],
+                    month: +d[1],
+                    year: +d[2],
+                    amount: +d[3],
+                    get date() { return ((this.year * 12) + this.month) * 31 + this.day; },
+                    get nMonth() { return (this.year * 12) + this.month; },
+                });
+            }
+            else
+            {
+                if ((d.length != 9)
+                 || ((d[5] != 'g') && (d[5] != 's'))
+                 || ((d[6] != 'o') && (d[6] != 'r'))
+                 || ((d[7] != 'n') && (d[7] != 'l')))
+                    return;
+
+                this.state.data.push({
+                    day: +d[0],
+                    month: +d[1],
+                    year: +d[2],
+                    amount: +d[3],
+                    product: d[4],
+                    gs: (d[5] === 'g'),
+                    or: (d[6] === 'o'),
+                    nl: (d[7] === 'n'),
+                    category: d[8],
+                    get date() { return ((this.year * 12) + this.month) * 31 + this.day; },
+                    get nMonth() { return (this.year * 12) + this.month; },
+                });
+            }
         });
 
         // extract meta info
@@ -445,6 +478,12 @@ class visual
             if (!this.state.products.includes(d.product))
                 this.state.products.push(d.product);
         });
+        this.state.income.forEach((d => {
+            if (d.date < this.state.first.date)
+                this.state.first = d;
+            if (d.date > this.state.last.date)
+                this.state.last = d;
+        }));
 
         this.state.months = this.state.last.nMonth - this.settings.month_offset - this.state.first.nMonth + 1;
         if (this.state.months <= 0)
@@ -1099,8 +1138,11 @@ class visual
             top: 50,
             bottom: 75,
         }
+
+        let income = this.state.vis.incomePerMonth[this.state.months - 2];
+        let budget = income - this.settings.saving;
         let t = d3.transition().duration(this.settings.transitionTime);
-        let maxval = Math.max(d3.max(this.state.vis.cumulativeSpending.current), d3.max(this.state.vis.cumulativeSpending.last), d3.max(this.state.vis.cumulativeSpending.avg), this.settings.income) * 1.1;
+        let maxval = Math.max(d3.max(this.state.vis.cumulativeSpending.current), d3.max(this.state.vis.cumulativeSpending.last), d3.max(this.state.vis.cumulativeSpending.avg), income) * 1.1;
 
         // create scales
         let xScale = d3.scaleLinear()
@@ -1124,7 +1166,7 @@ class visual
                 .attr("x", xScale.range()[0])
                 .attr("y", yScale.range()[1])
                 .attr("width", xScale.range()[1] - xScale.range()[0])
-                .attr("height", yScale(this.settings.income) - yScale.range()[1])
+                .attr("height", yScale(income) - yScale.range()[1])
                 .attr("fill", this.settings.colors_div[4])
                 .attr("stroke-width", 0);
 
@@ -1140,9 +1182,9 @@ class visual
                 .append("rect")
                 .attr("class", "budget")
                 .attr("x", xScale.range()[0])
-                .attr("y", yScale(this.settings.income))
+                .attr("y", yScale(income))
                 .attr("width", xScale.range()[1] - xScale.range()[0])
-                .attr("height", yScale(this.settings.budget) - yScale(this.settings.income))
+                .attr("height", yScale(budget) - yScale(income))
                 .attr("fill", this.settings.colors_div[3])
                 .attr("stroke-width", 0);
 
@@ -1215,6 +1257,76 @@ class visual
             },
         });
     }
+
+    // main rendering function for the cumulative saldo visualization
+    renderCumulativeSaldo()
+    {
+        // set parameters
+        let svg = this.svgs.cumulativeSaldo;
+        if (svg.empty())
+            return;
+
+        let width = svg.node().getBoundingClientRect().width;
+        let height = svg.node().getBoundingClientRect().height;
+        let padding = {
+            left: 50,
+            right: 100,
+            top: 50,
+            bottom: 75,
+        }
+        let t = d3.transition().duration(this.settings.transitionTime);
+        let maxval = d3.max(this.state.vis.cumulativeSaldo) * 1.1;
+        let minval = Math.min(d3.min(this.state.vis.cumulativeSaldo), 0) * 1.1;
+
+        // create month array
+        let timeParse = d3.timeParse("%m-%Y");
+        let dates = [...Array(this.state.months).keys()]
+            .map((d) => d + this.state.first.nMonth)
+            .map((d) => [Math.floor(d / 12), d % 12])
+            .map((d) => timeParse(d[1] + "-" + d[0]));
+
+        // create scales
+        let xScale = d3.scaleTime()
+            .domain([dates[0], dates[dates.length - 1]])
+            .rangeRound([padding.left, width - padding.right]);
+        let xAxis = d3.axisBottom(xScale)
+            .tickFormat(d3.timeFormat("%b-%Y"));
+
+        let yScale = d3.scaleLinear()
+            .domain([minval, maxval])
+            .rangeRound([height - padding.bottom, padding.top])
+            .nice();
+        let yAxis = d3.axisLeft(yScale).ticks(5);
+
+        // axes
+        this.renderHeading(svg, {width: width}, "Cumulative Saldo");
+        this.renderXLabel(svg, {x: (xScale.range()[0] + xScale.range()[1]) / 2, height: height, padding: padding.bottom}, "Month");
+        this.renderYLabel(svg, {padding: padding.left, height: (yScale.range()[0] + yScale.range()[1]) / 2}, "Saldo [" + this.settings.currency + "]");
+        this.renderXAxis(svg, {y: yScale(0), xAxis: xAxis});
+        this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
+
+        // line
+        this.renderLine(svg, this.state.vis.cumulativeSaldo, {
+            name: "saldoLine",
+            xIndex: dates,
+            xScale: xScale,
+            yScale: yScale,
+            color: this.settings.colors_seq[0],
+            t: t,
+        });
+
+        // mouse over tooltip overlay
+        this.addOverlay(svg, this.state.vis.cumulativeSaldo, {
+            xScale: xScale,
+            yScale: yScale,
+            mouseOver: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: true}) },
+            mouseOut: (node, data, attributes) => { this.toggleCrosshair(node, data, {...attributes, draw: false}) },
+            mouseMove: (node, data, attributes) => {
+                this.renderCrosshair(node, data, attributes);
+                this.monthTooltipText(node, data, attributes);
+            },
+        });
+    }
     
     // main rendering function for the spending per month visualization
     renderSpendingPerMonth()
@@ -1227,8 +1339,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 50,
-            right: 100,
+            left: 100,
+            right: 30,
             top: 50,
             bottom: 75,
         }
@@ -1515,8 +1627,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 100,
-            right: 30,
+            left: 50,
+            right: 100,
             top: 50,
             bottom: 105,
         }
@@ -1615,8 +1727,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 100,
-            right: 30,
+            left: 50,
+            right: 100,
             top: 50,
             bottom: 75,
         }
@@ -1683,8 +1795,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 50,
-            right: 100,
+            left: 100,
+            right: 30,
             top: 50,
             bottom: 75,
         }
@@ -1751,8 +1863,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 100,
-            right: 30,
+            left: 50,
+            right: 100,
             top: 50,
             bottom: 75,
         }
@@ -1819,8 +1931,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 50,
-            right: 100,
+            left: 100,
+            right: 30,
             top: 50,
             bottom: 75,
         }
@@ -1890,8 +2002,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 50,
-            right: 100,
+            left: 100,
+            right: 30,
             top: 50,
             bottom: 75,
         }
@@ -1957,6 +2069,7 @@ class visual
         {
             this.statusLine.text("Recorded from " + this.state.first.day + "." + this.state.first.month + "." + this.state.first.year + " to " + this.state.last.day + "." + this.state.last.month + "." + this.state.last.year);
             this.renderCumulativeSpending();
+            this.renderCumulativeSaldo();
             this.renderSpendingPerMonth();
             this.renderCumulativeMealSpending();
             this.renderCumulativeAmenitySpending();

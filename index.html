@@ -37,12 +37,13 @@
             .grid-container {
                 display: grid;
                 grid-template-areas:
-                    'cumulativeSpending spendingPerMonth'
+                    'cumulativeSpending cumulativeSaldo'
                     'cumulativeMealSpending cumulativeAmenitySpending'
-                    'spendingPerCategory topAmount'
-                    'spendingPerCategory topCount'
-                    'goodsVServices onceVRegular'
-                    'necessityVLuxury dummy';
+                    'spendingPerMonth goodsVServices'
+                    'onceVRegular necessityVLuxury'
+                    'topAmount spendingPerCategory'
+                    'topCount spendingPerCategory'
+                    ;
                 grid-column-gap: 10pt;
                 grid-row-gap: 20pt;
                 width: 95%;
@@ -50,6 +51,9 @@
             }
             .cumulativeSpending {
                 grid-area: cumulativeSpending;
+            }
+            .cumulativeSaldo {
+                grid-area: cumulativeSaldo;
             }
             .spendingPerMonth {
                 grid-area: spendingPerMonth;
@@ -95,6 +99,7 @@
         </div>
         <div class="grid-container">
             <svg class="cumulativeSpending size" id="cumulativeSpending"></svg>
+            <svg class="cumulativeSaldo size" id="cumulativeSaldo"></svg>
             <svg class="spendingPerMonth size" id="spendingPerMonth"></svg>
             <svg class="cumulativeMealSpending size" id="cumulativeMealSpending"></svg>
             <svg class="cumulativeAmenitySpending size" id="cumulativeAmenitySpending"></svg>
