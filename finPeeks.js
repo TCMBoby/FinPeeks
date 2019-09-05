@@ -1271,8 +1271,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 50,
-            right: 100,
+            left: 100,
+            right: 30,
             top: 50,
             bottom: 75,
         }
@@ -1435,8 +1435,8 @@ class visual
         let width = svg.node().getBoundingClientRect().width;
         let height = svg.node().getBoundingClientRect().height;
         let padding = {
-            left: 100,
-            right: 30,
+            left: 50,
+            right: 100,
             top: 50,
             bottom: 75,
         }
