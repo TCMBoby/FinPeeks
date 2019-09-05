@@ -1139,8 +1139,8 @@ class visual
             bottom: 75,
         }
 
-        let income = this.state.vis.incomePerMonth[this.state.months - 2];
-        let budget = income - this.settings.saving;
+        let income = (this.state.months > 1) ? this.state.vis.incomePerMonth[this.state.months - 2] : 0;
+        let budget = (income) ? (income - this.settings.saving) : 0;
         let t = d3.transition().duration(this.settings.transitionTime);
         let maxval = Math.max(d3.max(this.state.vis.cumulativeSpending.current), d3.max(this.state.vis.cumulativeSpending.last), d3.max(this.state.vis.cumulativeSpending.avg), income) * 1.1;
 
@@ -1157,6 +1157,7 @@ class visual
         let yAxis = d3.axisLeft(yScale).ticks(5);
 
         // income
+        if (income)
         {
             let dataJoin = svg.selectAll(".income").data([0]);
 
@@ -1175,6 +1176,7 @@ class visual
         }
 
         // budget
+        if (income)
         {
             let dataJoin = svg.selectAll(".budget").data([0]);
 
