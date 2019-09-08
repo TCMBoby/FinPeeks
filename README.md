@@ -28,7 +28,7 @@ An entry in a valid data File may look like this:
   9 1 2019 4.80 Cafeteria g o n food
 ```
 
-An example data file can be found [here](https://github.com/TCMBoby/FinPeeks/blob/master/data/exampleData.csv).
+An example data file can be found [here](https://raw.githubusercontent.com/TCMBoby/FinPeeks/master/data/exampleData.csv).
 
 ### Example Visualizations
 ![Visualization of Cumulative Expenses](screenshots/cumulative.jpg?raw=true)
