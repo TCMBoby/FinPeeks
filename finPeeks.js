@@ -1308,14 +1308,40 @@ class visual
         this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
 
         // line
-        this.renderLine(svg, this.state.vis.cumulativeSaldo, {
-            name: "saldoLine",
-            xIndex: dates,
-            xScale: xScale,
-            yScale: yScale,
-            color: this.settings.colors_seq[0],
-            t: t,
-        });
+        // this.renderLine(svg, this.state.vis.cumulativeSaldo, {
+        //     name: "saldoLine",
+        //     xIndex: dates,
+        //     xScale: xScale,
+        //     yScale: yScale,
+        //     color: this.settings.colors_seq[0],
+        //     t: t,
+        // });
+
+        let dataJoin = svg.selectAll(".saldoLine").data(this.state.vis.cumulativeSaldo);
+        let dataEnter = dataJoin.enter()
+            .append("line")
+            .attr("class", "saldoLine")
+            .attr("x1", (d, i) => xScale((i) ? dates[i - 1] : dates[i]))
+            .attr("x2", (d, i) => xScale(dates[i]))
+            .attr("y1", yScale.range()[0])
+            .attr("y2", yScale.range()[0])
+            .attr("stroke-width", 2)
+            .attr("stroke", (d, i) => {
+                if (i && (this.state.vis.cumulativeSaldo[i-1] > d))
+                    return this.settings.colors_div[5];
+                else
+                    return this.settings.colors_div[0];
+            });
+        // animate line
+        dataEnter.merge(dataJoin)
+            .transition(t)
+            .attr("y1", (d, i) => yScale(((i) ? this.state.vis.cumulativeSaldo[i-1] : d)))
+            .attr("y2", (d, i) => yScale(d));
+        dataJoin.exit()
+            .transition(t)
+            .attr("y1", yScale.range()[0])
+            .attr("y2", yScale.range()[0])
+            .remove()
 
         // mouse over tooltip overlay
         this.addOverlay(svg, this.state.vis.cumulativeSaldo, {
