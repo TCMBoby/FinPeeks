@@ -1131,7 +1131,8 @@ class visual
             return;
 
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 100,
             right: 30,
@@ -1269,7 +1270,8 @@ class visual
             return;
 
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 100,
             right: 30,
@@ -1365,7 +1367,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 100,
             right: 30,
@@ -1373,7 +1376,7 @@ class visual
             bottom: 75,
         }
         let t = d3.transition().duration(this.settings.transitionTime);
-        let maxval = Math.max(d3.max(this.state.vis.spendingPerMonth.meal), d3.max(this.state.vis.spendingPerMonth.total));
+        let maxval = Math.max(d3.max(this.state.vis.spendingPerMonth.meal), d3.max(this.state.vis.spendingPerMonth.total), d3.max(this.state.vis.incomePerMonth)) * 1.1;
         
         // create month array
         let timeParse = d3.timeParse("%m-%Y");
@@ -1405,8 +1408,8 @@ class visual
                 padding: padding.left,
                 colSize: 200,
             };
-            let entries = ["Total", "Meals"];
-            let colors = [this.settings.colors_seq[0], this.settings.colors_seq[2]];
+            let entries = ["Total", "Meals", "Income"];
+            let colors = [this.settings.colors_seq[0], this.settings.colors_seq[2], this.settings.colors_div[4]];
             this.renderLegend(svg, attributes, entries, colors);
         }
 
@@ -1417,6 +1420,16 @@ class visual
         this.renderXAxis(svg, {y: yScale.range()[0], xAxis: xAxis});
         this.renderYAxis(svg, {x: xScale.range()[0], yAxis: yAxis});
 
+        // income
+        this.renderLine(svg, this.state.vis.incomePerMonth, {
+            name: "incomeLine",
+            xIndex: dates,
+            xScale: xScale,
+            yScale: yScale,
+            color: this.settings.colors_div[4],
+            t: t,
+        });
+        
         // meals
         this.renderLine(svg, this.state.vis.spendingPerMonth.meal, {
             name: "mealLine",
@@ -1459,7 +1472,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 50,
             right: 100,
@@ -1556,7 +1570,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 50,
             right: 100,
@@ -1653,7 +1668,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width;
+        svg.attr("height", height);
         let padding = {
             left: 50,
             right: 100,
@@ -1753,7 +1769,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 50,
             right: 100,
@@ -1821,7 +1838,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 100,
             right: 30,
@@ -1889,7 +1907,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 50,
             right: 100,
@@ -1957,7 +1976,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 100,
             right: 30,
@@ -2028,7 +2048,8 @@ class visual
             return;
         
         let width = svg.node().getBoundingClientRect().width;
-        let height = svg.node().getBoundingClientRect().height;
+        let height = width / 2;
+        svg.attr("height", height);
         let padding = {
             left: 100,
             right: 30,
